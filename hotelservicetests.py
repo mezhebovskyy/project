@@ -3,7 +3,7 @@ from Hotel import HotelService
 
 
 class HotelserviceTestSuite(unittest.TestCase):
-    def test_can_add_new_hotel(self):
+    def test_can_Add_New_Hotel(self):
         hotelservice = HotelService()
 
         hotelservice.addhotel("fff", True)
@@ -11,7 +11,7 @@ class HotelserviceTestSuite(unittest.TestCase):
         self.assertEqual(len(hotelservice.listofhotels), 1)
 
 
-    def test_can_delete_hotel(self):
+    def test_can_Delete_Hotel(self):
         hotelservice = HotelService()
         hotelservice.addhotel("mmm", True)
         hotelservice.addhotel("nnn", True)
@@ -42,15 +42,6 @@ class HotelserviceTestSuite(unittest.TestCase):
         for hotel in hotelservice.listofhotels:
             self.assertEqual(hotel.isavaliable, False)
 
-
-    # def test_get_Hotel_By_Id(self):
-    #     hotelservice = HotelService()
-    #     hotelservice.addhotel("mmm", True)
-    #     for neededhotel in hotelservice.listofhotels:
-    #         if neededhotel.id == "1":
-    #             return neededhotel.name
-    #     hotel = hotelservice.getHotelByID(1)
-    #     self.assertTrue(neededhotel.name == hotel.name)
 
 
     def test_can_get_Hotel_by_Number(self):
