@@ -16,15 +16,6 @@ def main():
 
     bunchofhotels.loadhotels()
 
-    # bunchofrooms = RoomService()
-    # f = open(roomFileName, "r")
-    # for line in f:
-    #     line = line.replace('\n','')
-    #     id, hotelID, number, beds, price, status = line.split(",")
-    #     room = Room(id, hotelID, number, beds, price, isavaliable)
-    #     bunchofrooms.listofrooms.append(room)
-    # f.close()
-
     # bunchoforders = OrderService()
     # f = open(ordrFileName, "r")
     # for line in f:
