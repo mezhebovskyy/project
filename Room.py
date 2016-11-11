@@ -1,14 +1,16 @@
+import sqlite3 as lite
+import sys
 import uuid
 from Models import Room
 from Hotel import *
 
-roomFileName = "fileRooms.csv"
+database = "HROdata.db"
 
 
 class RoomService:
     def loadRoomsForHotel(self, hotelid):
         roomreader = RoomReader()
-        rooms = roomreader.readfromfile(roomFileName, hotelid)
+        rooms = roomreader.loadRooms(database, hotelid)
         return rooms
 
     def getRoomByNumber(self, hotel, roomNumber):
@@ -19,7 +21,7 @@ class RoomService:
     def getRoomById(self, hotels, roomID):
         for hotel in hotels:
             for room in hotel.rooms:
-                if room.id == int(roomID):
+                if room.id == str(roomID):
                     return room
 
     def getRoomsByStatus(self, hotels, status):
@@ -45,6 +47,9 @@ class RoomService:
         ID = uuid.uuid4()
         hotelid = hotel.id
         hotel.rooms.append(Room(ID, hotelid, number, beds, price, isavaliable))
+        for room in hotel.rooms:
+            if room.id == str(ID):
+                RoomReader().saveRoom(room)
 
     def editRoom(self, room, newnumber, newbeds, newprice, newstatus):
         if newnumber != ".":
@@ -55,10 +60,12 @@ class RoomService:
             room.price = newprice
         if newstatus != ".":
             room.isavaliable = newstatus
+        RoomReader().updateRoom(room)
 
     def deleteRoom(self, hotel, roomNumber):
         for room in hotel.rooms:
             if room.number == int(roomNumber):
+                RoomReader().deleteRoomFromDB(room.id)
                 hotel.rooms.remove(room)
 
 
@@ -101,23 +108,44 @@ class RoomPrinter:
 
 
 class RoomReader:
-    def readfromfile(self, fileName, hotelid):
+    def loadRooms(self, database, hotelid):
         array = []
-        f = open(fileName, "r")
-        for line in f:
-            line = line.replace('\n','')
-            id, hotelID, number, beds, price, isavaliable = line.split(",")
-            if int(hotelID) == hotelid:
-                array.append(Room(id, hotelID, number, beds, price, isavaliable))
-        f.close()
-        return array
+        conn = lite.connect(database)
+        with conn:
+            conn.row_factory = lite.Row
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM Rooms")
+            rows = cursor.fetchall()
+            for row in rows:
+                if str(row["HotelID"]) == hotelid:
+                    if row["Status"] == "True":
+                        array.append(Room(row["Id"], row["HotelID"], row["Number"], row["Beds"], row["Price"], True))
+                    if row["Status"] == "False":
+                        array.append(Room(row["Id"], row["HotelID"], row["Number"], row["Beds"], row["Price"], False))
+            return array
+        conn.close()
 
-    def saveroom(self, hotels):
-        open(roomFileName, "w").close()
-        f = open(roomFileName, "a")
-        for hotel in hotels:
-            for room in hotel.rooms:
-                linetoadd = "%s,%s,%s,%s,%s,%s\n" % (room.id, room.hotelID, room.number, room.beds, room.price, room.isavaliable)
-                f.write(linetoadd)
-        f.flush()
-        f.close()
+    def saveRoom(self, room):
+        conn = lite.connect(database)
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO Rooms VALUES(?, ?, ?, ?, ?, ?)", (str(room.id), str(room.hotelID),
+                                                                      room.number, room.beds, room.price, str(room.isavaliable)))
+        conn.commit()
+        conn.close()
+
+    def updateRoom(self, room):
+        conn = lite.connect(database)
+        with conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE Rooms SET Number=?, Beds=?, Price=?, Status=? WHERE Id=?", (room.number, room.beds,
+                                                                                               str(room.price), str(room.isavaliable), str(room.id)))
+            conn.commit()
+        conn.close()
+
+    def deleteRoomFromDB(self, ID):
+        conn = lite.connect(database)
+        with conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM Rooms WHERE Id=?", [str(ID)])
+            conn.commit()
+        conn.close()

@@ -43,8 +43,7 @@ class HotelserviceTestSuite(unittest.TestCase):
             self.assertEqual(hotel.isavaliable, False)
 
 
-
-    def test_can_get_Hotel_by_Number(self):
+    def test_can_Get_Hotel_by_Number(self):
         hotelservice = HotelService()
         hotelservice.addhotel("mmm", True)
         hotelservice.addhotel("vvv", True)
@@ -55,7 +54,7 @@ class HotelserviceTestSuite(unittest.TestCase):
         self.assertEqual(hotel.name, "nnn")
 
 
-    def test_get_Hotels_By_Status(self):
+    def test_can_Get_Hotels_By_Status(self):
         hotelservice = HotelService()
         hotelservice.addhotel("mmm", True)
         hotelservice.addhotel("vvv", True)
@@ -68,7 +67,7 @@ class HotelserviceTestSuite(unittest.TestCase):
         self.assertEqual(len(notAvaliableHotels), 1)
 
 
-    def test_get_All_Hotels(self):
+    def test_can_Get_All_Hotels(self):
         hotelservice = HotelService()
         hotelservice.addhotel("mmm", True)
         hotelservice.addhotel("nnn", True)

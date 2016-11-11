@@ -1,18 +1,20 @@
+import sqlite3 as lite
+import sys
 import uuid
 from Models import Hotel
 from Room import *
 # from Order import OrderService
 
-hotelFileName = "fileHotels.csv"
+database = "HROdata.db"
 
 class HotelService:
-    def __init__(self):
+    def __init__(self, hr):
         self.listofhotels = []
         self.roomservice = RoomService()
-    
+        self.reader = hr
+
     def loadhotels(self):
-        reader = HotelReader()
-        self.listofhotels = reader.loadData(hotelFileName)
+        self.listofhotels = self.reader.loadData(database)
         for hotel in self.listofhotels:
             hotel.rooms = self.roomservice.loadRoomsForHotel(hotel.id)
 
@@ -40,17 +42,21 @@ class HotelService:
         ID = uuid.uuid4()
         hotel = Hotel(ID, name, isavaliable)
         self.listofhotels.append(hotel)
+        HotelReader().saveNewHotel(hotel)
 
     def editHotelName(self, hotelnumber, newname):
         hotel = self.getHotel(hotelnumber)
         hotel.name = newname
+        HotelReader().updateHotelName(hotel, newname)
 
     def editHotelStatus(self, hotelnumber):
         hotel = self.getHotel(hotelnumber)
         hotel.isavaliable = not hotel.isavaliable
+        HotelReader().updateHotelStatus(hotel)
 
     def deleteHotel(self, hotelnumber):
         hotel = self.getHotel(hotelnumber)
+        HotelReader().deleteHotelFromDB(hotel.id)
         self.listofhotels.remove(hotel)
 
 class HotelPrinter:
@@ -76,25 +82,47 @@ class HotelPrinter:
             print "Hotel name - %s. ID - %s." % (hotel.name, hotel.id)
 
 class HotelReader:
-    def loadData(self, fileName):
+    def loadData(self, database):
         array = []
-        f = open(fileName, "r")
-        for line in f:
-            line = line.replace('\n','')
-            id, name, status = line.split(",")
-            array.append(Hotel(id, name, status))
-        f.close()
-        return array
+        conn = lite.connect(database)
+        with conn:
+            conn.row_factory = lite.Row
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM Hotels")
+            rows = cursor.fetchall()
+            for row in rows:
+                array.append(Hotel(row["Id"], str(row["Name"]), row["Status"] == "True"))
+            return array
+        conn.close()
 
-    def savehotel(self, hotels):
-        open(hotelFileName, "w").close()
-        f = open(hotelFileName, "a")
-        for hotel in hotels:
-            linetoadd = "%s,%s,%s\n" % (hotel.id, hotel.name, hotel.isavaliable)
-            f.write(linetoadd)
-        f.flush()
-        f.close()
+    def saveNewHotel(self, hotel):
+        conn = lite.connect(database)
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO Hotels VALUES(?, ?, ?)", (str(hotel.id), hotel.name, str(hotel.isavaliable)))
+        conn.commit()
+        conn.close()
 
+    def updateHotelName(self, hotel, name):
+        conn = lite.connect(database)
+        with conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE Hotels SET Name=? WHERE Id=?", (name, str(hotel.id)))
+            conn.commit()
+        conn.close()
 
+    def updateHotelStatus(self, hotel):
+        conn = lite.connect(database)
+        with conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE Hotels SET Status=? WHERE Id=?", (str(hotel.isavaliable), str(hotel.id)))
+            conn.commit()
+        conn.close()
 
-
+    def deleteHotelFromDB(self, hotelID):
+        conn = lite.connect(database)
+        with conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM Hotels WHERE Id=?", [str(hotelID)])
+            cursor.execute("DELETE FROM Rooms WHERE HotelID=?", [str(hotelID)])
+            conn.commit()
+        conn.close()

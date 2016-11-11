@@ -9,12 +9,18 @@ orderFileName = "fileOrders.csv"
 
 
 def main():
-    bunchofhotels = HotelService()
+    database = Database()
+    database.isDbCreated()
+    database.isHotelsTableCreated()
+    database.isRoomsTableCreated()
+
+    hotelreader = HotelReader()
+    bunchofhotels = HotelService(hotelreader)
+    bunchofhotels.loadhotels()
+
     room_service = RoomService()
 
     hotel_printer = HotelPrinter()
-
-    bunchofhotels.loadhotels()
 
     # bunchoforders = OrderService()
     # f = open(ordrFileName, "r")
